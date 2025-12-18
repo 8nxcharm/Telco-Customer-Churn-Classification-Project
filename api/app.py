@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 import pandas as pd
 import joblib
@@ -41,12 +42,12 @@ def home():
 
 
 @app.post("/predict")
-def predict(data: CustomerData):
+def predict(data: Customer):
     try:
         # Convert input to DataFrame
         df = pd.DataFrame([data.dict()])
 
-        # 🔥 FIX: Rename columns to EXACT training names
+        # Rename columns to EXACT training feature names
         df = df.rename(columns={
             "senior_citizen": "SeniorCitizen",
             "partner": "Partner",
@@ -66,11 +67,10 @@ def predict(data: CustomerData):
             "payment_method": "PaymentMethod"
         })
 
+        # Predict
         pred = model.predict(df)[0]
 
-        return {
-            "label": "Churn" if pred == 1 else "No Churn"
-        }
+        return {"label": "Churn" if pred == 1 else "No Churn"}
 
     except Exception as e:
         return JSONResponse(
