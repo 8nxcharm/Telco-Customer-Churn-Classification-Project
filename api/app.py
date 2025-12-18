@@ -1,17 +1,17 @@
 from fastapi import FastAPI
-from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 import pandas as pd
 import joblib
+from fastapi.responses import JSONResponse
 
 app = FastAPI(title="Telco Customer Churn API")
 
-# Load trained pipeline
+# Load trained model pipeline
 model = joblib.load("models/global_best_model.pkl")
 
 
-# ---- Input schema ----
-class Customer(BaseModel):
+# ---- Input schema (MATCH TRAINING DATA EXACTLY) ----
+class CustomerData(BaseModel):
     gender: str
     senior_citizen: int
     partner: str
@@ -42,32 +42,12 @@ def home():
 
 
 @app.post("/predict")
-def predict(data: Customer):
+def predict(data: CustomerData):
     try:
-        # Convert input to DataFrame
+        # Convert request to DataFrame
         df = pd.DataFrame([data.dict()])
 
-        # Rename columns to EXACT training feature names
-        df = df.rename(columns={
-            "senior_citizen": "SeniorCitizen",
-            "partner": "Partner",
-            "dependents": "Dependents",
-            "monthly_charges": "MonthlyCharges",
-            "total_charges": "TotalCharges",
-            "phone_service": "PhoneService",
-            "multiple_lines": "MultipleLines",
-            "internet_service": "InternetService",
-            "online_security": "OnlineSecurity",
-            "online_backup": "OnlineBackup",
-            "device_protection": "DeviceProtection",
-            "tech_support": "TechSupport",
-            "streaming_tv": "StreamingTV",
-            "streaming_movies": "StreamingMovies",
-            "paperless_billing": "PaperlessBilling",
-            "payment_method": "PaymentMethod"
-        })
-
-        # Predict
+        # 🔥 NO RENAMING — model expects snake_case
         pred = model.predict(df)[0]
 
         return {"label": "Churn" if pred == 1 else "No Churn"}
