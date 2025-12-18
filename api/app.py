@@ -47,7 +47,12 @@ def predict(data: CustomerData):
         # Convert request to DataFrame
         df = pd.DataFrame([data.dict()])
 
-        # 🔥 NO RENAMING — model expects snake_case
+        # FIX: rename ONLY columns that differ from training schema
+        df = df.rename(columns={
+            "partner": "Partner",
+            "dependents": "Dependents"
+        })
+
         pred = model.predict(df)[0]
 
         return {"label": "Churn" if pred == 1 else "No Churn"}
