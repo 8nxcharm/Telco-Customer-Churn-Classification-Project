@@ -41,16 +41,39 @@ def home():
 
 
 @app.post("/predict")
-def predict(data: Customer):
-    # Convert request to DataFrame
-    df = pd.DataFrame([data.dict()])
+def predict(data: CustomerData):
+    try:
+        # Convert input to DataFrame
+        df = pd.DataFrame([data.dict()])
 
-    # Predict class and probability
-    pred = model.predict(df)[0]
-    prob = model.predict_proba(df)[0, 1]
+        # 🔥 FIX: Rename columns to EXACT training names
+        df = df.rename(columns={
+            "senior_citizen": "SeniorCitizen",
+            "partner": "Partner",
+            "dependents": "Dependents",
+            "monthly_charges": "MonthlyCharges",
+            "total_charges": "TotalCharges",
+            "phone_service": "PhoneService",
+            "multiple_lines": "MultipleLines",
+            "internet_service": "InternetService",
+            "online_security": "OnlineSecurity",
+            "online_backup": "OnlineBackup",
+            "device_protection": "DeviceProtection",
+            "tech_support": "TechSupport",
+            "streaming_tv": "StreamingTV",
+            "streaming_movies": "StreamingMovies",
+            "paperless_billing": "PaperlessBilling",
+            "payment_method": "PaymentMethod"
+        })
 
-    return {
-        "prediction": int(pred),
-        "probability": round(float(prob), 4),
-        "label": "Churn" if pred == 1 else "No Churn"
-    }
+        pred = model.predict(df)[0]
+
+        return {
+            "label": "Churn" if pred == 1 else "No Churn"
+        }
+
+    except Exception as e:
+        return JSONResponse(
+            status_code=500,
+            content={"error": str(e)}
+        )
